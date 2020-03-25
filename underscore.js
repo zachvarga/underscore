@@ -1,4 +1,4 @@
-//     Underscore.js 1.9.1
+//     Underscore.js 1.9.2
 //     https://underscorejs.org
 //     (c) 2009-2018 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
@@ -60,7 +60,7 @@
   }
 
   // Current version.
-  _.VERSION = '1.9.1';
+  _.VERSION = '1.9.2';
 
   // Internal function that returns an efficient (for current engines) version
   // of the passed-in callback, to be repeatedly applied in other Underscore
@@ -84,13 +84,10 @@
     };
   };
 
-  var builtinIteratee;
-
   // An internal function to generate callbacks that can be applied to each
   // element in a collection, returning the desired result — either `identity`,
   // an arbitrary callback, a property matcher, or a property accessor.
-  var cb = function(value, context, argCount) {
-    if (_.iteratee !== builtinIteratee) return _.iteratee(value, context);
+  var baseIteratee = function(value, context, argCount) {
     if (value == null) return _.identity;
     if (_.isFunction(value)) return optimizeCb(value, context, argCount);
     if (_.isObject(value) && !_.isArray(value)) return _.matcher(value);
@@ -100,8 +97,15 @@
   // External wrapper for our callback generator. Users may customize
   // `_.iteratee` if they want additional predicate/iteratee shorthand styles.
   // This abstraction hides the internal-only argCount argument.
-  _.iteratee = builtinIteratee = function(value, context) {
-    return cb(value, context, Infinity);
+  var exportIteratee = _.iteratee = function(value, context) {
+    return baseIteratee(value, context, Infinity);
+  };
+
+  // The function we actually call internally. It invokes _.iteratee if
+  // overridden, otherwise baseIteratee.
+  var cb = function(value, context, argCount) {
+    if (_.iteratee !== exportIteratee) return _.iteratee(value, context);
+    return baseIteratee(value, context, argCount);
   };
 
   // Some functions take a variable number of arguments, or a few expected
